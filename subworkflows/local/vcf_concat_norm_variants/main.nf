@@ -1,6 +1,7 @@
-include { ADD_FOUND_IN_TAG                           } from '../../../modules/local/add_found_in_tag/main'
+include { ADD_FOUND_IN_TAG                            } from '../../../modules/local/add_found_in_tag/main'
 include { BCFTOOLS_CONCAT                             } from '../../../modules/nf-core/bcftools/concat/main'
 include { BCFTOOLS_NORM as BCFTOOLS_NORM_SINGLESAMPLE } from '../../../modules/nf-core/bcftools/norm/main'
+include { BCFTOOLS_VIEW as FILTER_REFCALL             } from '../../../modules/nf-core/bcftools/view/main'
 
 //
 // Workflow to concatenate and normalize variants
@@ -32,9 +33,14 @@ workflow VCF_CONCAT_NORM_VARIANTS {
     )
     ch_versions = ch_versions.mix(BCFTOOLS_NORM_SINGLESAMPLE.out.versions)
 
+    ch_norm_single_vcf = BCFTOOLS_NORM_SINGLESAMPLE.out.vcf
+    ch_norm_single_index = BCFTOOLS_NORM_SINGLESAMPLE.out.tbi.mix(BCFTOOLS_NORM_SINGLESAMPLE.out.csi)
+
+    FILTER_REFCALL(ch_norm_single_vcf.join(ch_norm_single_index), [], [], [])
+
     emit:
-    vcf                 = BCFTOOLS_NORM_SINGLESAMPLE.out.vcf                                         // channel: [ val(meta), path(vcf) ]
-    index               = BCFTOOLS_NORM_SINGLESAMPLE.out.tbi.mix(BCFTOOLS_NORM_SINGLESAMPLE.out.csi) // channel: [ val(meta), path(tbi/csi) ]
+    vcf                 = ch_norm_single_vcf                                                         // channel: [ val(meta), path(vcf) ]
+    index               = ch_norm_single_index                                                       // channel: [ val(meta), path(tbi/csi) ]
     bcftools_concat_vcf = BCFTOOLS_CONCAT.out.vcf                                                    // channel: [ val(meta), path(vcf) ]
     versions            = ch_versions                                                                // channel: [ path(versions.yml) ]
 }
