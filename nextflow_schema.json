@@ -525,8 +525,8 @@
                 "str_caller": {
                     "type": "string",
                     "default": "trgt",
-                    "description": "Which caller to use for short tandem repeat expansions (TRGT or STRdust).",
-                    "enum": ["trgt", "strdust"]
+                    "description": "Which caller to use for short tandem repeat expansions (TRGT or STRaglr).",
+                    "enum": ["trgt", "straglr"]
                 },
                 "phaser": {
                     "type": "string",

@@ -1,8 +1,9 @@
-include { STRDUST          } from '../../../modules/nf-core/strdust/'
+include { STRAGLR          } from '../../../modules/local/straglr/'
+include { TABIX_BGZIPTABIX } from '../../../modules/nf-core/tabix/bgziptabix/main/'
 include { ADD_FOUND_IN_TAG } from '../../../modules/local/add_found_in_tag/main'
 include { BCFTOOLS_MERGE   } from '../../../modules/nf-core/bcftools/merge/'
 
-workflow CALL_REPEAT_EXPANSIONS_STRDUST {
+workflow CALL_REPEAT_EXPANSIONS_STRAGLR {
 
     take:
     ch_bam_bai  // channel: [mandatory] [ val(meta), path(bam), path(bai) ]
@@ -13,17 +14,20 @@ workflow CALL_REPEAT_EXPANSIONS_STRDUST {
     main:
     ch_versions = Channel.empty()
 
-    STRDUST (
+    STRAGLR (
         ch_bam_bai,
         ch_fasta,
-        ch_fai,
-        ch_bed
+        ch_bed.map { _meta, bed -> bed }
     )
-    ch_versions.mix(STRDUST.out.versions)
+    ch_versions.mix(STRAGLR.out.versions)
+
+    TABIX_BGZIPTABIX(STRAGLR.out.vcf)
+    ch_vcf = TABIX_BGZIPTABIX.out.gz_tbi.map { meta, vcf, _tbi -> [ meta, vcf ] }
+    ch_tbi = TABIX_BGZIPTABIX.out.gz_tbi.map { meta, _vcf, tbi -> [ meta, tbi ] }
 
     ADD_FOUND_IN_TAG (
-        STRDUST.out.vcf.join(STRDUST.out.tbi),
-        "STRdust"
+        TABIX_BGZIPTABIX.out.gz_tbi,
+        "STRaglr"
     )
     ch_versions = ch_versions.mix(ADD_FOUND_IN_TAG.out.versions)
 
@@ -42,8 +46,8 @@ workflow CALL_REPEAT_EXPANSIONS_STRDUST {
     ch_versions = ch_versions.mix(BCFTOOLS_MERGE.out.versions)
 
     emit:
-    sample_vcf  = STRDUST.out.vcf          // channel: [ val(meta), path(vcf) ]
-    sample_tbi  = STRDUST.out.tbi          // channel: [ val(meta), path(tbi) ]
+    sample_vcf  = ch_vcf                   // channel: [ val(meta), path(vcf) ]
+    sample_tbi  = ch_tbi                   // channel: [ val(meta), path(tbi) ]
     family_vcf  = BCFTOOLS_MERGE.out.vcf   // channel: [ val(meta), path(vcf) ]
     family_tbi  = BCFTOOLS_MERGE.out.index // channel: [ val(meta), path(tbi) ]
     versions    = ch_versions              // channel: [ versions.yml ]

@@ -18,7 +18,7 @@ include { CONVERT_INPUT_FILES as CONVERT_INPUT_FASTQS            } from '../subw
 include { CONVERT_INPUT_FILES as CONVERT_INPUT_BAMS              } from '../subworkflows/local/convert_input_files'
 include { BAM_INFER_SEX                                          } from '../subworkflows/local/bam_infer_sex'
 include { CALL_PARALOGS                                          } from '../subworkflows/local/call_paralogs'
-include { CALL_REPEAT_EXPANSIONS_STRDUST                         } from '../subworkflows/local/call_repeat_expansions_strdust'
+include { CALL_REPEAT_EXPANSIONS_STRAGLR                         } from '../subworkflows/local/call_repeat_expansions_straglr'
 include { CALL_REPEAT_EXPANSIONS_TRGT                            } from '../subworkflows/local/call_repeat_expansions_trgt'
 include { CALL_SNVS                                              } from '../subworkflows/local/call_snvs'
 include { CALL_SVS                                               } from '../subworkflows/local/call_svs'
@@ -750,14 +750,15 @@ workflow NALLO {
             )
             ch_versions = ch_versions.mix(CALL_REPEAT_EXPANSIONS_TRGT.out.versions)
             ch_repeat_expansions = CALL_REPEAT_EXPANSIONS_TRGT.out.family_vcf
-        } else if (params.str_caller == "strdust"){
-            CALL_REPEAT_EXPANSIONS_STRDUST (
+        } else if (params.str_caller == "straglr"){
+            CALL_REPEAT_EXPANSIONS_STRAGLR (
                 PHASING.out.haplotagged_bam_bai,
                 ch_fasta,
                 ch_fai,
                 ch_str_bed
             )
-            ch_versions = ch_versions.mix(CALL_REPEAT_EXPANSIONS_STRDUST.out.versions)
+            ch_versions = ch_versions.mix(CALL_REPEAT_EXPANSIONS_STRAGLR.out.versions)
+            ch_repeat_expansions = CALL_REPEAT_EXPANSIONS_STRAGLR.out.family_vcf
         }
     }
 
