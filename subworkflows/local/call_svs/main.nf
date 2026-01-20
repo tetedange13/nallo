@@ -1,5 +1,4 @@
 include { ADD_FOUND_IN_TAG                          } from '../../../modules/local/add_found_in_tag/main'
-include { CLEAN_SNIFFLES                            } from '../../../modules/local/clean_sniffles/main'
 include { SVDB_MERGE as SVDB_MERGE_BY_CALLER        } from '../../../modules/nf-core/svdb/merge/main'
 include { SVDB_MERGE as SVDB_MERGE_BY_FAMILY        } from '../../../modules/nf-core/svdb/merge/main'
 include { BCFTOOLS_VIEW                             } from '../../../modules/nf-core/bcftools/view/main'
@@ -65,24 +64,19 @@ workflow CALL_SVS {
     //
     if(sv_callers_to_run.contains('sniffles')) {
 
+        // Last 2 bool control (resp.) VCF and SNF output
         SNIFFLES (
-            ch_bam_bai
+            ch_bam_bai,
+            ch_fasta,
+            ch_tandem_repeats,
+            true,
+            true
         )
         ch_versions = ch_versions.mix(SNIFFLES.out.versions)
 
-        CLEAN_SNIFFLES (
-            SNIFFLES.out.vcf
-        )
-        ch_versions = ch_versions.mix(CLEAN_SNIFFLES.out.versions)
-
-        BCFTOOLS_SORT (
-            CLEAN_SNIFFLES.out.vcf
-        )
-        ch_versions = ch_versions.mix(BCFTOOLS_SORT.out.versions)
-
         ch_sv_calls = ch_sv_calls.mix(
             addCallerToMeta(
-                BCFTOOLS_SORT.out.vcf.join(BCFTOOLS_SORT.out.tbi, failOnMismatch:true, failOnDuplicate:true),
+                SNIFFLES.out.vcf.join(SNIFFLES.out.tbi, failOnMismatch:true, failOnDuplicate:true),
                 'sniffles'
             )
         )
