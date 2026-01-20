@@ -754,7 +754,6 @@ workflow NALLO {
             CALL_REPEAT_EXPANSIONS_STRAGLR (
                 PHASING.out.haplotagged_bam_bai,
                 ch_fasta,
-                ch_fai,
                 ch_str_bed
             )
             ch_versions = ch_versions.mix(CALL_REPEAT_EXPANSIONS_STRAGLR.out.versions)
